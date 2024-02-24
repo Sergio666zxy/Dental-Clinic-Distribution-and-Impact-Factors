@@ -1,5 +1,7 @@
 # dynamic part
 
+Aside from Spatial heterogeneity, the temporal changes also play an important part in the result. We proceed 
+
 To capture the temporal changes of the changes, we divide the sample by two part, where one sample before the COVID 19 and one sample after the COVID 19 occured. The reason we divide the sample into two is because China has taken strict restriction on the regulation of COVID 19. In this case, most of the private dental clinics are restricted to open during this period, which would result in the operation of dental clinics hard to do. As a result, the distribution of the dental clinics will change, which will result in the break down of some and open in new locations. These dynamic changes are mapped in figure x. 
 
 We also conduct spatial lagged model to check the result.
