@@ -9,6 +9,6 @@ replace have_kou = 0 if have_kou == .
 
 // summary statistics
 
-logout, save("ttest_with_result.rtf") word replace: ttable3 kou end_price_pers pop light pm25 $Control_Variables, by(have_kou) tvalue
-logout, save("ttest_with_result_mean_std.rtf") word replace: tabstat kou end_price_pers pop light pm25 $Control_Variables, by(have_kou) stat(mean sd) nototal long col(stat)
+logout, save("ttest_with_result.rtf") word replace: ttable3 kou yiji erji sanji end_price_pers pop light pm25 $Control_Variables, by(have_kou) tvalue
+logout, save("ttest_with_result_mean_std.rtf") word replace: tabstat kou yiji erji sanji end_price_pers pop light pm25 $Control_Variables, by(have_kou) stat(mean sd) nototal long col(stat)
 
