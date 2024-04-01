@@ -1,0 +1,220 @@
+---
+title: "figure 2 and figure 3"
+author: "Xuyuan Zhang"
+date: "2024-04-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(sf)
+library(maptools)
+library(rgdal)
+library(tidyverse)
+library(dplyr)
+library(viridis)
+library(foreign)
+library(Hmisc)
+library(lattice)
+library(Formula)
+library(aspace)
+library(ggplot2)
+library(sp)
+library(paletteer)
+library(ggspatial)
+library(ggthemes)
+```
+
+# Distribution of Private Dental Clinics
+
+We use the number of dental clinics in each district as the base map, the green points represents the distribution of secondary hospitals and the red points represent the distribution of tertiary hospitals. The standard deviation ellipse represents the clusterings of the private dental clinics.
+
+```{r}
+name_list <- c("shanghai.shp", "beijing.shp", "nanjing.shp", "wuhan.shp", "tianjin.shp", "shenzhen.shp", "xian.shp", "guangzhou.shp", "chongqing.shp", "chengdu.shp", "hangzhou.shp")
+
+input_name_list <- c("shanghai.tiff", "beijing.tiff", "nanjing.tiff", "wuhan.tiff", "tianjin.tiff", "shenzhen.tiff", "xian.tiff", "guangzhou.tiff", "chongqing.tiff", "chengdu.tiff", "hangzhou.tiff")
+
+for (i in 1:length(name_list)){
+    
+    file_name <- name_list[i]
+    
+    file_path <- paste0("base_map/", file_name)
+    base_map <- read_sf(file_path)
+    
+    base_map <- base_map %>% 
+        st_set_crs(., 4326)
+    
+    file_path <- paste0("tertiary hospital/", file_name)
+    only_third <- read_sf(file_path)
+    
+    only_third <- only_third %>%
+        st_set_crs(., 4326)
+    
+    file_path <- paste0("secondary hospital/", file_name)
+    second_level <- read_sf(file_path)
+    
+    second_level <- second_level %>%
+        st_set_crs(., 4326)
+    
+    file_path <- paste0("primary hospital/", file_name)
+    prim_level <- read_sf(file_path)
+    
+    prim_level <- prim_level %>%
+        st_set_crs(., 4326)
+    
+    file_path <- paste0("other/", file_name)
+    point_data <- read_sf(file_path)
+    point_data <- point_data %>%
+        st_set_crs(., 4326)
+    
+    file_path <- paste0("figure_1_base_map/", file_name)
+    regression_base_1k <- read_sf(file_path)
+    
+    regression_base_1k <- regression_base_1k %>%
+        st_set_crs(., 4326)
+    
+    g.base <- ggplot(data = base_map) + geom_sf(aes(fill = `kou_val`, geometry = `geometry`)) +
+        scale_fill_viridis(name = "dental clinics", , option = "viridis", alpha = 0.7, direction = -1) + 
+        scale_color_viridis(option = "viridis", alpha = 0.7, direction = -1) +
+        geom_point(data = only_third, aes(x=gpsx, y=gpsy), col = 'red', alpha = 0.45, size=1) +
+        geom_point(data = second_level, aes(x=gpsx, y=gpsy), col = 'green', alpha = 0.45, size=0.5) +
+        # geom_point(data = point_data, aes(x=gpsx, y=gpsy), col = 'blue', alpha = 0.45, size=0.1) +
+        theme_void() + # to set an empty background to avoid axis elements
+        theme(# remove all axes
+            axis.title.y = element_blank(),
+            axis.title.x = element_blank(),
+            axis.line = element_blank(),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks = element_blank()) + 
+        scale_y_continuous(breaks = NULL) + scale_x_continuous(breaks = NULL) +
+        annotation_scale(location = "bl", width_hint = 0.4) +
+        annotation_north_arrow(location = "tr", which_north = "true", 
+                               pad_x = unit(0.05, "in"), pad_y = unit(0.05, "in"),
+                               style = north_arrow_nautical) 
+    
+    name_list_0 <- unique(point_data$adcode)
+    
+    
+    for (j in 1:length(name_list_0)){
+        dfi <- subset(point_data, point_data$adcode == name_list_0[j])
+        des <- data.frame(dfi[, c('gpsx', 'gpsy')])
+        
+        coordinates(des) <- ~ gpsx + gpsy
+        
+        cas_region <- SpatialPoints(coords = des)
+        cas_region <- data.frame(coordinates(cas_region))
+        
+        r.SDE <- calc_sde(id = 1, points = cas_region)
+        # print(r.SDE)
+        # ellipse.spr <- data.frame(r.SDE$coordsSDE)
+        coordsSDE <- r.SDE$FORPLOTTING$coordsSDE
+        ellipse.spr <- data.frame(x = coordsSDE[,1], y = coordsSDE[,2])
+        # print(ellipse.spr)
+        names(ellipse.spr)[1] <- 'long'
+        names(ellipse.spr)[2] <- 'lat'
+        centre.spr <- data.frame(r.SDE$CENTRE.x, r.SDE$CENTRE.y)
+        
+        if (j == 1){
+            g.ellipse.spr <- g.base + geom_point(data = ellipse.spr, aes(x=long, y=lat, group = NULL), 
+                                                 col = 'orange', alpha = 0.15, size =0.08)
+            
+            # g.ellipse.spr <- g.spr + geom_point(data = centre.spr, aes(x=r.SDE.CENTRE.x, y=r.SDE.CENTRE.y, group = NULL), 
+            #                   col = 'orange', size = 2, shape = 20)
+        }
+        else{
+            g.ellipse.spr <- g.ellipse.spr + geom_point(data = ellipse.spr, aes(x=long, y=lat, group = NULL), 
+                                                        col = 'orange', alpha = 0.15, size =0.08)
+            
+            # g.ellipse.spr <- g.ellipse.spr + geom_point(data = centre.spr, aes(x=r.SDE.CENTRE.x, y=r.SDE.CENTRE.y, group = NULL), 
+            #                                            col = 'orange', size = 2, shape = 20)
+        }
+    }
+    
+    # Display the plot
+    
+    
+    output_name <- input_name_list[i]
+    output_path1 = paste0("output_figure1/", output_name)
+    ggsave(output_path1, width = 10, height = 6, dpi = 400)        
+    print(g.ellipse.spr)
+}
+```
+
+# Distribution of Study Sample
+
+The base map is the distribution of housing price (natural logarithm) and the blue points are the distribution of private dental clinics.
+
+```{r}
+# Define a list of shapefile names for different cities
+name_list <- c("shanghai.shp", "beijing.shp", "nanjing.shp", "wuhan.shp", "tianjin.shp", 
+               "shenzhen.shp", "xian.shp", "guangzhou.shp", "chongqing.shp", 
+               "chengdu.shp", "hangzhou.shp")
+
+# Define a corresponding list of output names for the generated maps
+input_name_list <- c("shanghai.tiff", "beijing.tiff", "nanjing.tiff", "wuhan.tiff", 
+                     "tianjin.tiff", "shenzhen.tiff", "xian.tiff", "guangzhou.tiff", 
+                     "chongqing.tiff", "chengdu.tiff", "hangzhou.tiff")
+
+# Loop over each city name in the list
+for (i in 1:length(name_list)) {
+    
+    # Read the base map shapefile for the current city
+    file_name <- name_list[i]
+    file_path <- paste0("base_map/", file_name)
+    base_map <- read_sf(file_path)
+    base_map <- base_map %>% st_set_crs(., 4326)  # Set the coordinate reference system to WGS84
+    
+    # Read the tertiary hospital shapefile for the current city
+    file_path <- paste0("tertiary hospital/", file_name)
+    only_third <- read_sf(file_path)
+    only_third <- only_third %>% st_set_crs(., 4326)
+    
+    # Read the secondary hospital shapefile for the current city
+    file_path <- paste0("secondary hospital/", file_name)
+    second_level <- read_sf(file_path)
+    second_level <- second_level %>% st_set_crs(., 4326)
+    
+    # Read the primary hospital shapefile for the current city
+    file_path <- paste0("primary hospital/", file_name)
+    prim_level <- read_sf(file_path)
+    prim_level <- prim_level %>% st_set_crs(., 4326)
+    
+    # Read the other point data shapefile for the current city
+    file_path <- paste0("other/", file_name)
+    point_data <- read_sf(file_path)
+    point_data <- point_data %>% st_set_crs(., 4326)
+    
+    # Read the base map for regression analysis with a 1 km grid
+    file_path <- paste0("figure_1_base_map/", file_name)
+    regression_base_1k <- read_sf(file_path)
+    regression_base_1k <- regression_base_1k %>% st_set_crs(., 4326)
+    
+    # Create a base ggplot object with the regression base map, setting up the aesthetics
+    g.base <- ggplot(data = regression_base_1k) +
+        geom_sf(aes(fill = `end_price_`, geometry = `geometry`)) +  # Fill color based on housing price
+        scale_fill_viridis(name = "housing price", option = "viridis", alpha = 0.7, direction = -1) + 
+        scale_color_viridis(option = "viridis", alpha = 0.7, direction = -1) +
+        geom_point(data = point_data, aes(x=gpsx, y=gpsy), col = 'blue', alpha = 0.45, size=0.1) +
+        theme_void() +  # Use an empty theme to avoid drawing axis and background
+        theme(axis.title.y = element_blank(), axis.title.x = element_blank(),
+              axis.line = element_blank(), axis.text.x = element_blank(),
+              axis.text.y = element_blank(), axis.ticks = element_blank()) + 
+        scale_y_continuous(breaks = NULL) + scale_x_continuous(breaks = NULL) +
+        annotation_scale(location = "bl", width_hint = 0.4) +  # Add a scale bar
+        annotation_north_arrow(location = "tr", which_north = "true", 
+                               pad_x = unit(0.05, "in"), pad_y = unit(0.05, "in"),
+                               style = north_arrow_nautical)  # Add a north arrow
+    
+    # Display the plot
+    print(g.base)
+    
+    # Save the plot to a TIFF file
+    output_name <- input_name_list[i]
+    output_path1 = paste0("output_figure3/", output_name)
+    ggsave(output_path1, plot = g.base, width = 10, height = 6, dpi = 400)                   
+}
+
+```
+
