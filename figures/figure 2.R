@@ -15,7 +15,7 @@ library(paletteer)
 library(ggspatial)
 library(ggthemes)
 
-
+setwd("E:/umich/Spatial-Distribution-and-Impact-Factors-of-Private-Dental-Practices-Evidence-from-China-main/figures")
 name_list <- c("shanghai.shp", "beijing.shp", "nanjing.shp", "wuhan.shp", "tianjin.shp", "shenzhen.shp", "xian.shp", "guangzhou.shp", "chongqing.shp", "chengdu.shp", "hangzhou.shp")
 
 input_name_list <- c("shanghai.tiff", "beijing.tiff", "nanjing.tiff", "wuhan.tiff", "tianjin.tiff", "shenzhen.tiff", "xian.tiff", "guangzhou.tiff", "chongqing.tiff", "chengdu.tiff", "hangzhou.tiff")
@@ -91,9 +91,12 @@ for (i in 1:length(name_list)){
         cas_region <- SpatialPoints(coords = des)
         cas_region <- data.frame(coordinates(cas_region))
         
-        calc_sde(id = 1, points = cas_region)
-        
-        ellipse.spr <- data.frame(r.SDE$coordsSDE)
+        r.SDE <- calc_sde(id = 1, points = cas_region)
+        # print(r.SDE)
+        # ellipse.spr <- data.frame(r.SDE$coordsSDE)
+        coordsSDE <- r.SDE$FORPLOTTING$coordsSDE
+        ellipse.spr <- data.frame(x = coordsSDE[,1], y = coordsSDE[,2])
+        # print(ellipse.spr)
         names(ellipse.spr)[1] <- 'long'
         names(ellipse.spr)[2] <- 'lat'
         centre.spr <- data.frame(r.SDE$CENTRE.x, r.SDE$CENTRE.y)
