@@ -1,4 +1,4 @@
-# Spatial Distribution and Impact Factors of Private Dental Practices: Evidence from Chinese major cities
+# Dental Clinic Distribution and Impact Factors
 
 This is the replication codes of tables and figures of the manuscript entitled Spatial Distribution and Impact Factors of Private Dental Practices: Evidence from Chinese major cities.
 
